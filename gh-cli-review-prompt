@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PR_NUMBER="${1:-}"
+
+if [[ -z "$PR_NUMBER" ]]; then
+  echo "Usage: gh cli-review-prompt <PR_NUMBER>" >&2
+  exit 1
+fi
+
+PR_JSON="$(gh pr view "$PR_NUMBER" \
+  --json title,body,url,author,baseRefName,headRefName,files)"
+
+TITLE="$(echo "$PR_JSON" | jq -r '.title')"
+BODY="$(echo "$PR_JSON" | jq -r '.body // "(説明なし)"')"
+URL="$(echo "$PR_JSON" | jq -r '.url')"
+AUTHOR="$(echo "$PR_JSON" | jq -r '.author.login')"
+BASE_REF="$(echo "$PR_JSON" | jq -r '.baseRefName')"
+HEAD_REF="$(echo "$PR_JSON" | jq -r '.headRefName')"
+
+CHANGED_FILES="$(
+  echo "$PR_JSON" | jq -r '
+    .files[]
+    | "\(.path) | +\(.additions) -\(.deletions)"
+  '
+)"
+
+BODY=$(cat << EOF
+# PRレビューコンテキスト
+
+## タイトル
+$TITLE
+
+## URL
+$URL
+
+## 作成者
+$AUTHOR
+
+## Base Branch
+$BASE_REF
+
+## Head Branch
+$HEAD_REF
+
+## 説明文
+$BODY
+
+## 変更ファイル一覧
+\`\`\`
+$CHANGED_FILES
+\`\`\`
+
+## AIへの指示
+- あなたはシニアソフトウェアエンジニアとしてこのPRをレビューする
+- レビュー時は、上記の変更ファイル一覧を優先的に確認すること
+- 必要に応じてローカルgitから diff やファイル本文を参照すること
+- generated file / lock file / build成果物は原則レビュー不要
+- 指摘は Critical / Major / Minor で分類すること
+- PR説明文と実装の整合性を確認すること
+- バグ、セキュリティ、パフォーマンス、保守性の観点を重視すること
+EOF
+)
+
+echo "$BODY"
