@@ -4,7 +4,7 @@ set -euo pipefail
 PR_NUMBER="${1:-}"
 
 if [[ -z "$PR_NUMBER" ]]; then
-  echo "Usage: gh cli-review-prompt <PR_NUMBER>" >&2
+  echo "Usage: gh review-prompt <PR_NUMBER>" >&2
   exit 1
 fi
 
