@@ -3,7 +3,7 @@
 
 ```sh
 # Install by gh command.
-$ gh extension install yano3nora/gh-review-prompt
+gh extension install yano3nora/gh-review-prompt
 
 # Gen prompt for cli tools such as codex, gemini, claude.
 gh review-prompt 999 | pbcopy
